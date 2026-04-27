@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Homework Log Sheet</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+    /* Print specifications */
+    @page {
+        size: A4 landscape;
+        margin: 0in 0in 0in 0.5in; /* 0.5in Left Margin only */
+    }
+    
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f8fafc;
+        font-size: 11px;
+    }
+
+    /* Controls Panel - Minimalized */
+    .controls {
+        padding: 15px 20px;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+        margin: 15px auto;
+        width: 95%;
+        max-width: 1300px;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 12px;
+        align-items: center;
+    }
+    
+    .divider { width: 1px; height: 24px; background-color: #cbd5e1; margin: 0 5px; }
+
+    .controls label { font-size: 12px; font-weight: 600; color: #334155; }
+    
+    .controls select, .controls input {
+        padding: 4px 6px; font-size: 12px; border: 1px solid #cbd5e1; border-radius: 4px;
+    }
+
+    .controls button, .upload-label {
+        padding: 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer; color: white;
+        border: none; border-radius: 5px; display: inline-block;
+    }
+    
+    .upload-label { background-color: #f59e0b; }
+    .generate-btn { background-color: #3b82f6; }
+    .print-btn { background-color: #64748b; }
+    .excel-btn { background-color: #10b981; }
+
+    .print-page { 
+        background: #fff; 
+        padding: 15px 20px; 
+        height: 195mm; 
+        display: flex;
+        flex-direction: column;
+        margin: 0 auto 20px auto;
+        width: 95%;
+        max-width: 1300px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        box-sizing: border-box;
+    }
+
+    @media print {
+        .controls { display: none; } 
+        body { background-color: #ffffff; padding: 0; margin: 0; }
+        .print-page { 
+            height: 100vh; 
+            width: 100%;
+            max-width: none;
+            margin: 0;
+            padding: 10px 15px; 
+            box-shadow: none;
+            page-break-after: always; 
+        }
+        .print-page:last-child { page-break-after: auto; }
+    }
+
+    /* Minimal Header Formatting */
+    .minimal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 5px;
+        border-bottom: 1.5px solid #000;
+        padding-bottom: 3px;
+        flex-shrink: 0; 
+    }
+    .school-title { font-size: 24px; font-weight: bold; text-transform: uppercase; color: #0f172a; }
+    .school-subtitle { font-size: 18px; font-weight: normal; color: #475569; }
+    .meta-info { display: flex; gap: 12px; font-size: 12px; font-weight: bold; }
+    .meta-info div span { border-bottom: 1px dashed #64748b; display: inline-block; min-width: 70px; padding: 0 3px; outline: none; font-weight: normal;}
+
+    /* Dynamic Table Formatting */
+    table { 
+        width: 100%; 
+        border-collapse: collapse; 
+        table-layout: fixed; 
+        flex-grow: 1; 
+        height: 100%; 
+    }
+    th, td { border: 1px solid #000; padding: 1px; text-align: center; overflow: hidden; }
+
+    /* Space-Optimized Headers */
+    th.vertical-text {
+        writing-mode: vertical-rl; transform: rotate(180deg); height: 40px;
+        white-space: nowrap; font-size: 10px; font-weight: bold; background-color: #f1f5f9;
+    }
+    
+    th.horizontal-text { height: 24px; font-size: 11px; font-weight: bold; background-color: #f1f5f9; }
+    th.dynamic-date { font-size: 11px; font-weight: bold; background-color: #f8fafc; height: 16px; }
+    thead tr:first-child th:not(.dynamic-day) { background-color: #e2e8f0; }
+
+    /* Columns */
+    .col-sl { width: 28px; }
+    .col-id { width: 60px; }
+    .col-name { width: 160px; text-align: left; padding-left: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .col-remarks { width: 100px; }
+    
+    [contenteditable="true"]:focus { background-color: #e0f2fe; outline: none; }
+</style>
+</head>
+<body>
+
+<div class="controls no-print">
+    <label class="upload-label">
+        📂 Upload Student List
+        <input type="file" id="excelUpload" accept=".xlsx, .xls, .csv" style="display: none;">
+    </label>
+    
+    <div class="divider"></div>
+
+    <label>Mode: 
+        <select id="modeInput" onchange="toggleWeekVisibility()">
+            <option value="monthly" selected>Monthly</option>
+            <option value="weekly">Weekly</option>
+        </select>
+    </label>
+
+    <label id="weekLabel" style="display: none;">Week:
+        <select id="weekInput">
+            <option value="0">W1</option><option value="1">W2</option><option value="2">W3</option><option value="3">W4</option><option value="4">W5</option>
+        </select>
+    </label>
+
+    <label>Year: <input type="number" id="yearInput" value="2026" style="width: 55px;"></label>
+    <label>Month: 
+        <select id="monthInput">
+            <option value="0">Jan</option><option value="1">Feb</option><option value="2">Mar</option><option value="3" selected>Apr</option>
+            <option value="4">May</option><option value="5">Jun</option><option value="6">Jul</option><option value="7">Aug</option>
+            <option value="8">Sep</option><option value="9">Oct</option><option value="10">Nov</option><option value="11">Dec</option>
+        </select>
+    </label>
+
+    <button class="generate-btn" onclick="generateSheet()">⚙️ Generate</button>
+    <button class="print-btn" onclick="window.print()">🖨️ Print</button>
+    <button class="excel-btn" onclick="exportToExcel()">📊 Export</button>
+</div>
+
+<div id="print-area"></div>
+
+<script>
+let students = [];
+const MAX_PER_PAGE = 26; 
+const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu"];
+
+// Default Header values
+let currentClass = "one Boys (3)";
+let currentSubject = "Mathematics";
+let currentTeacher = "Abu Bakr";
+
+function toggleWeekVisibility() {
+    document.getElementById('weekLabel').style.display = (document.getElementById('modeInput').value === 'weekly') ? 'flex' : 'none';
+}
+
+function formatName(name) {
+    if (!name) return "";
+    let trimmed = String(name).trim();
+    if (trimmed.length <= 25) return trimmed;
+    let parts = trimmed.split(/\s+/);
+    if (parts.length <= 1) return trimmed.substring(0, 25); 
+    for (let i = 0; i < parts.length - 1; i++) {
+        parts[i] = parts[i].charAt(0) + '.';
+        let currentStr = parts.join(' ');
+        if (currentStr.length <= 25) return currentStr;
+    }
+    return parts.join(' ').substring(0, 25);
+}
+
+document.getElementById('excelUpload').addEventListener('change', function(e) {
+    let file = e.target.files[0];
+    if (!file) return;
+    let reader = new FileReader();
+    reader.onload = function(e) {
+        let data = new Uint8Array(e.target.result);
+        let workbook = XLSX.read(data, {type: 'array'});
+        let worksheet = workbook.Sheets[workbook.SheetNames[0]];
+        let rows = XLSX.utils.sheet_to_json(worksheet, {header: 1});
+        students = [];
+        for (let i = 0; i < rows.length; i++) {
+            if (rows[i] && rows[i].length >= 3) {
+                let cellA = String(rows[i][0] || "").trim().toLowerCase();
+                let cellB = String(rows[i][1] || "").trim().toLowerCase();
+                if (cellA === "sl" || cellB === "id") continue;
+                students.push({ id: rows[i][1] || "", name: formatName(rows[i][2] || "") });
+            }
+        }
+        if(students.length > 0) {
+            currentClass = workbook.SheetNames[0];
+            generateSheet();
+        }
+        document.getElementById('excelUpload').value = "";
+    };
+    reader.readAsArrayBuffer(file);
+});
+
+function generateSheet() {
+    const year = parseInt(document.getElementById('yearInput').value);
+    const month = parseInt(document.getElementById('monthInput').value);
+    const mode = document.getElementById('modeInput').value;
+    
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    let timeframeLabel = monthNames[month] + " " + year;
+    let validDates = [];
+
+    if (mode === 'monthly') {
+        let dInM = new Date(year, month + 1, 0).getDate();
+        for (let d = 1; d <= dInM; d++) {
+            let day = new Date(year, month, d).getDay();
+            if (day >= 0 && day <= 4) validDates.push({ label: d.toString(), name: dayNames[day] });
+        }
+    } else {
+        const wIdx = parseInt(document.getElementById('weekInput').value);
+        timeframeLabel += ` (W${wIdx + 1})`;
+        let fSun = new Date(year, month, 1 - new Date(year, month, 1).getDay());
+        let tSun = new Date(fSun); tSun.setDate(fSun.getDate() + (wIdx * 7));
+        for (let i = 0; i <= 4; i++) {
+            let cD = new Date(tSun); cD.setDate(tSun.getDate() + i);
+            validDates.push({ label: `${cD.getDate()} ${cD.toLocaleString('default', { month: 'short' })}`, name: dayNames[i] });
+        }
+    }
+
+    let displayData = students.length > 0 ? students : Array(15).fill({ id: "", name: "" });
+    const printArea = document.getElementById('print-area');
+    printArea.innerHTML = '';
+
+    for (let i = 0; i < displayData.length; i += MAX_PER_PAGE) {
+        let chunk = displayData.slice(i, i + MAX_PER_PAGE);
+        let pageDiv = document.createElement('div');
+        pageDiv.className = 'print-page';
+        pageDiv.innerHTML = `
+            <div class="minimal-header">
+                <div class="school-title">MADRASATUS SUNNAH <span class="school-subtitle">| Homework Log Sheet</span></div>
+                <div class="meta-info">
+                    <div>Class: <span contenteditable="true">${currentClass}</span></div>
+                    <div>Subject: <span contenteditable="true">${currentSubject}</span></div>
+                    <div>Teacher: <span contenteditable="true">${currentTeacher}</span></div>
+                    <div>Month: <span contenteditable="true">${timeframeLabel}</span></div>
+                </div>
+            </div>
+            <table>
+                <thead>
+                    <tr class="row-days">
+                        <th rowspan="2" class="col-sl">SL</th>
+                        <th rowspan="2" class="col-id">ID</th>
+                        <th rowspan="2" class="col-name">Student Name</th>
+                        <th rowspan="2" class="col-remarks">Remarks</th>
+                    </tr>
+                    <tr class="row-dates"></tr>
+                </thead>
+                <tbody class="student-body"></tbody>
+            </table>`;
+
+        let dRow = pageDiv.querySelector('.row-days');
+        let dtRow = pageDiv.querySelector('.row-dates');
+        let remTh = dRow.querySelector('.col-remarks');
+
+        validDates.forEach(vd => {
+            let thD = document.createElement('th');
+            thD.className = (mode === 'weekly') ? 'horizontal-text dynamic-day' : 'vertical-text dynamic-day';
+            thD.innerText = vd.name;
+            dRow.insertBefore(thD, remTh);
+            let thDt = document.createElement('th');
+            thDt.className = 'dynamic-date';
+            thDt.innerText = vd.label;
+            dtRow.appendChild(thDt);
+        });
+
+        let tbody = pageDiv.querySelector('.student-body');
+        chunk.forEach((s, idx) => {
+            let tr = document.createElement('tr');
+            let serialNumber = s.name ? (i + idx + 1) : "";
+            tr.innerHTML = `<td>${serialNumber}</td><td contenteditable="true">${s.id}</td><td class="col-name" contenteditable="true" title="${s.name}">${s.name}</td>`;
+            validDates.forEach(() => tr.innerHTML += `<td contenteditable="true"></td>`);
+            tr.innerHTML += `<td contenteditable="true"></td>`;
+            tbody.appendChild(tr);
+        });
+        printArea.appendChild(pageDiv);
+    }
+}
+
+function exportToExcel() {
+    let tables = document.querySelectorAll("table");
+    if(!tables.length) return;
+    let vTable = document.createElement("table");
+    vTable.appendChild(tables[0].querySelector("thead").cloneNode(true));
+    let vBody = document.createElement("tbody");
+    tables.forEach(t => t.querySelectorAll("tbody tr").forEach(r => vBody.appendChild(r.cloneNode(true))));
+    vTable.appendChild(vBody);
+    XLSX.writeFile(XLSX.utils.table_to_book(vTable), `HomeworkLog_Export.xlsx`);
+}
+
+window.onload = () => { toggleWeekVisibility(); generateSheet(); };
+
+// Anti-Copy Logic
+document.addEventListener('contextmenu', e => e.preventDefault());
+document.addEventListener('keydown', e => {
+    if (e.key === 'F12' || (e.ctrlKey && (e.key === 'u' || e.key === 's'))) e.preventDefault();
+});
+</script>
+</body>
+</html>
