@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Universal Tactical Trainer v4.4</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧠</text></svg>">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        tactical: {
+                            teal: '#0F766E',
+                            tealDim: 'rgba(15, 118, 110, 0.2)',
+                            orange: '#EA580C',
+                            orangeDim: 'rgba(234, 88, 12, 0.2)',
+                            dark: '#020617',
+                            surface: '#0f172a',
+                        }
+                    },
+                    fontFamily: {
+                        bangla: ['Hind Siliguri', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Inter', 'Hind Siliguri', sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* Dark Mode Defaults */
+        .dark body {
+            background-color: #020617;
+            color: #f8fafc;
+            background-image: 
+                linear-gradient(rgba(15, 118, 110, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(15, 118, 110, 0.05) 1px, transparent 1px);
+            background-size: 50px 50px;
+        }
+
+        /* Light Mode Defaults */
+        .light body {
+            background-color: #f0fdfa;
+            color: #020617;
+            background-image: 
+                linear-gradient(rgba(15, 118, 110, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(15, 118, 110, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+        }
+
+        .glass-panel {
+            backdrop-filter: blur(16px);
+            border: 1px solid;
+            transition: all 0.3s;
+        }
+        .dark .glass-panel { background: rgba(15, 23, 42, 0.96); border-color: #0F766E; box-shadow: 0 0 40px -10px rgba(15, 118, 110, 0.15); }
+        .light .glass-panel { background: rgba(255, 255, 255, 0.96); border-color: #0F766E; box-shadow: 0 10px 40px -10px rgba(15, 118, 110, 0.1); }
+
+        .btn-option {
+            transition: all 0.15s ease;
+            border-left-width: 6px;
+            border-left-color: transparent;
+            position: relative;
+        }
+        .btn-option::before {
+            content: attr(data-key);
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            opacity: 0.5;
+            font-weight: 800;
+        }
+        
+        .dark .btn-option:hover:not(:disabled) { background-color: #1e293b; border-left-color: #0F766E; }
+        .light .btn-option:hover:not(:disabled) { background-color: #ccfbf1; border-left-color: #0F766E; }
+        
+        .conf-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-family: 'JetBrains Mono', monospace;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 2px solid transparent;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+        .dark .conf-btn { background: #1e293b; color: #94a3b8; border-color: #334155; }
+        .light .conf-btn { background: #e2e8f0; color: #64748b; border-color: #cbd5e1; }
+        .conf-btn:hover { transform: translateY(-4px); border-color: #0F766E; }
+        .conf-btn.active { transform: scale(1.15); color: white; box-shadow: 0 0 20px rgba(0,0,0,0.3); }
+        .conf-btn.active-low { background: #EA580C; border-color: #9a3412; }
+        .conf-btn.active-high { background: #0F766E; border-color: #115e59; }
+
+        .exam-q-block { border-left: 4px solid; padding: 1.5rem; margin-bottom: 1.5rem; border-radius: 0.5rem; }
+        .dark .exam-q-block { border-left-color: #334155; background: rgba(15, 23, 42, 0.6); }
+        .light .exam-q-block { border-left-color: #cbd5e1; background: #ffffff; border: 1px solid #e2e8f0; }
+
+        .exam-correct { border-left-color: #0F766E !important; background: rgba(15, 118, 110, 0.1) !important; }
+        .exam-wrong { border-left-color: #DC2626 !important; background: rgba(220, 38, 38, 0.1) !important; }
+        .exam-missed { border-left-color: #EA580C !important; background: rgba(234, 88, 12, 0.1) !important; }
+
+        .opt-correct { background-color: #0F766E !important; color: white !important; border-color: #047857 !important; }
+        .opt-wrong { background-color: #DC2626 !important; color: white !important; border-color: #b91c1c !important; }
+        
+        .feedback-panel { border-left: 4px solid; transition: all 0.3s; }
+        .fb-correct { border-left-color: #0F766E; background: rgba(15, 118, 110, 0.1); }
+        .fb-wrong { border-left-color: #DC2626; background: rgba(220, 38, 38, 0.1); }
+        .fb-skip { border-left-color: #EA580C; background: rgba(234, 88, 12, 0.1); }
+
+        .arsenal-btn { transition: all 0.2s; }
+        .dark .arsenal-btn { background: rgba(15, 118, 110, 0.1); border: 1px solid #0F766E; color: #cbd5e1; }
+        .light .arsenal-btn { background: #f0fdf4; border: 1px solid #0F766E; color: #0F766E; }
+        .arsenal-btn:hover { background: #0F766E !important; color: white !important; transform: scale(1.02); }
+
+        .fade-in { animation: fadeIn 0.3s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        ::-webkit-scrollbar { width: 8px; }
+        .dark ::-webkit-scrollbar-track { background: #020617; }
+        .dark ::-webkit-scrollbar-thumb { background: #0F766E; border-radius: 4px; }
+        .light ::-webkit-scrollbar-track { background: #f1f5f9; }
+        .light ::-webkit-scrollbar-thumb { background: #0F766E; border-radius: 4px; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-2 md:p-6 transition-colors">
+
+    <div class="w-full max-w-6xl glass-panel rounded-2xl overflow-hidden flex flex-col min-h-[85vh] relative border-t-8 border-tactical-teal shadow-2xl">
+
+        <!-- HEADER -->
+        <div class="p-4 border-b flex justify-between items-center z-30 sticky top-0 shadow-sm backdrop-blur-md transition-colors border-tactical-teal/30 dark:bg-slate-900/90 light:bg-white/90">
+            <div class="flex items-center gap-4">
+                <button onclick="sys.abortMission()" class="h-10 w-10 rounded-lg bg-tactical-orange hover:bg-orange-700 text-white font-bold transition-all shadow-lg flex items-center justify-center" title="Mission Control">
+                    <i class="fa-solid fa-house"></i>
+                </button>
+                <button onclick="sys.goBack()" id="btn-back" class="hidden h-10 w-10 rounded-lg bg-slate-700 hover:bg-tactical-teal text-white transition-all shadow-lg flex items-center justify-center" title="Back">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </button>
+                <div>
+                    <h1 class="font-bold text-lg tracking-tight uppercase dark:text-white light:text-slate-900">Tactical <span class="text-tactical-teal">Trainer</span> v4.4</h1>
+                    <div class="flex gap-3 text-[10px] font-mono uppercase items-center dark:text-slate-400 light:text-slate-500">
+                        <span id="active-file" class="text-tactical-teal font-bold">NO ARSENAL</span>
+                        <span class="opacity-50">|</span>
+                        <span id="mode-display">IDLE</span>
+                    </div>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <button onclick="sys.toggleTheme()" class="h-8 w-8 rounded-full flex items-center justify-center transition-colors dark:text-slate-400 dark:hover:text-white light:text-slate-600 light:hover:text-black bg-slate-200 dark:bg-slate-800">
+                    <i class="fa-solid fa-circle-half-stroke text-xl"></i>
+                </button>
+                <div id="timer-hud" class="hidden text-right">
+                    <div class="text-[10px] uppercase font-bold tracking-wider dark:text-slate-400 light:text-slate-600">Clock</div>
+                    <div class="text-2xl font-mono font-bold text-tactical-orange" id="timer-display">00:00</div>
+                </div>
+                <div id="score-hud" class="hidden text-right">
+                    <div class="text-[10px] uppercase font-bold tracking-wider dark:text-slate-400 light:text-slate-600">Net Score</div>
+                    <div class="text-2xl font-mono font-bold dark:text-white light:text-slate-900" id="score-display">0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CONTENT STAGE -->
+        <div class="flex-grow relative p-6 md:p-10 flex flex-col justify-center w-full overflow-y-auto" id="stage-container">
+            
+            <!-- 0. ARSENAL SELECTION -->
+            <div id="screen-upload" class="w-full max-w-4xl mx-auto flex flex-col items-center justify-center fade-in py-8">
+                <div class="text-center mb-10">
+                    <i class="fa-solid fa-brain text-6xl mb-4 text-tactical-teal drop-shadow-[0_0_15px_rgba(15,118,110,0.5)]"></i>
+                    <h2 class="text-4xl font-black mb-2 uppercase tracking-tighter dark:text-white light:text-slate-900">Mission Control</h2>
+                    <p class="text-sm font-mono dark:text-slate-300 light:text-slate-600">Select data vector or scan sector for multiple targets.</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full mb-10">
+                    <label class="cursor-pointer group relative">
+                        <div class="h-full border rounded-xl p-8 text-center transition-all hover:border-tactical-teal hover:bg-tactical-teal/5 shadow-lg dark:bg-slate-800 dark:border-slate-600 light:bg-white light:border-slate-200">
+                            <i class="fa-solid fa-file-code text-3xl mb-3 transition-colors dark:text-slate-400 group-hover:text-tactical-teal light:text-slate-500"></i>
+                            <h3 class="font-bold mb-1 dark:text-white light:text-slate-900">Load File</h3>
+                            <p class="text-xs dark:text-slate-400 light:text-slate-500">Single .txt database</p>
+                        </div>
+                        <input type="file" id="file-upload" accept=".txt" class="hidden" onchange="sys.loadFile(this)">
+                    </label>
+                    <label class="cursor-pointer group relative">
+                        <div class="h-full border rounded-xl p-8 text-center transition-all hover:border-tactical-orange hover:bg-tactical-orange/5 shadow-lg dark:bg-slate-800 dark:border-slate-600 light:bg-white light:border-slate-200">
+                            <i class="fa-solid fa-folder-tree text-3xl mb-3 transition-colors dark:text-slate-400 group-hover:text-tactical-orange light:text-slate-500"></i>
+                            <h3 class="font-bold mb-1 dark:text-white light:text-slate-900">Scan Sector</h3>
+                            <p class="text-xs dark:text-slate-400 light:text-slate-500">Auto-load folder content</p>
+                        </div>
+                        <input type="file" id="folder-upload" webkitdirectory directory multiple class="hidden" onchange="sys.loadFolder(this)">
+                    </label>
+                </div>
+                <div id="file-list-container" class="w-full hidden">
+                    <div class="flex items-center justify-between mb-4 border-b pb-2 dark:border-slate-700 light:border-slate-300">
+                        <h3 class="text-sm font-bold uppercase tracking-widest dark:text-slate-300 light:text-slate-600">Available Arsenals</h3>
+                        <span class="text-xs font-mono dark:text-slate-400 light:text-slate-500" id="file-count">0 DETECTED</span>
+                    </div>
+                    <div id="file-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3"></div>
+                </div>
+            </div>
+
+            <!-- 1. MODE CONFIGURATION -->
+            <div id="screen-mode" class="hidden w-full max-w-4xl mx-auto fade-in">
+                <div class="text-center mb-8">
+                    <h2 class="text-2xl font-bold uppercase tracking-widest dark:text-white light:text-slate-900">Protocol Selection</h2>
+                    <p class="text-xs font-mono mt-1 font-bold text-tactical-teal" id="selected-arsenal-name">TARGET: UNKNOWN</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <button onclick="sys.startTraining()" class="group relative p-8 border rounded-xl hover:border-tactical-teal hover:bg-tactical-teal/5 transition-all text-left shadow-lg dark:bg-slate-800 dark:border-slate-700 light:bg-white light:border-slate-200">
+                        <div class="absolute top-4 right-4 text-3xl transition-colors dark:text-slate-600 group-hover:text-tactical-teal light:text-slate-300">
+                            <i class="fa-solid fa-chalkboard-user"></i>
+                        </div>
+                        <h3 class="text-lg font-bold mb-2 uppercase dark:text-white light:text-slate-900">Training Mode</h3>
+                        <ul class="text-xs space-y-1 font-mono dark:text-slate-300 light:text-slate-600">
+                            <li>> Immediate Intel Feedback</li>
+                            <li>> Scoring based on Confidence</li>
+                            <li>> Manual Advance</li>
+                        </ul>
+                    </button>
+                    <button onclick="sys.showExamConfig()" class="group relative p-8 border rounded-xl hover:border-tactical-orange hover:bg-tactical-orange/5 transition-all text-left shadow-lg dark:bg-slate-800 dark:border-slate-700 light:bg-white light:border-slate-200">
+                        <div class="absolute top-4 right-4 text-3xl transition-colors dark:text-slate-600 group-hover:text-tactical-orange light:text-slate-300">
+                            <i class="fa-solid fa-stopwatch"></i>
+                        </div>
+                        <h3 class="text-lg font-bold mb-2 uppercase dark:text-white light:text-slate-900">Exam Mode</h3>
+                        <ul class="text-xs space-y-1 font-mono dark:text-slate-300 light:text-slate-600">
+                            <li>> Tactical Shuffle (Randomized)</li>
+                            <li>> Time Pressure</li>
+                            <li>> Correct: +1.0 / Wrong: -0.5</li>
+                            <li>> Forensic Review</li>
+                        </ul>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 2. EXAM SETTINGS -->
+            <div id="screen-exam-config" class="hidden w-full max-w-md mx-auto fade-in text-center">
+                <h2 class="text-xl font-bold mb-6 uppercase tracking-wide dark:text-white light:text-slate-900">Mission Constraints</h2>
+                <div class="p-6 rounded-xl border mb-6 text-left shadow-xl dark:bg-slate-800 dark:border-slate-700 light:bg-white light:border-slate-200">
+                    <div class="mb-6">
+                        <label class="flex justify-between text-xs uppercase font-bold mb-2 dark:text-slate-400 light:text-slate-600">
+                            <span>Objective Count</span>
+                            <span class="text-tactical-teal" id="max-q-disp">Max: 0</span>
+                        </label>
+                        <input type="number" id="exam-q-count" class="w-full border rounded p-3 outline-none font-mono text-center text-lg focus:border-tactical-orange dark:bg-slate-900 dark:border-slate-600 dark:text-white light:bg-slate-50 light:border-slate-300 light:text-slate-900" value="10">
+                    </div>
+                    <div class="mb-2">
+                        <label class="block text-xs uppercase font-bold mb-2 dark:text-slate-400 light:text-slate-600">
+                            Time Per Objective
+                        </label>
+                        <div class="flex items-center gap-4">
+                            <span class="text-xs font-mono dark:text-slate-500 light:text-slate-400">35s</span>
+                            <input type="range" id="exam-time-slider" min="35" max="60" value="45" class="flex-grow h-2 rounded-lg appearance-none cursor-pointer dark:bg-slate-700 light:bg-slate-200" oninput="document.getElementById('time-val-disp').innerText = this.value + 's'">
+                            <span class="text-xs font-mono dark:text-slate-500 light:text-slate-400">60s</span>
+                        </div>
+                        <div class="text-center mt-2 font-mono font-bold text-tactical-orange text-xl" id="time-val-disp">45s</div>
+                    </div>
+                </div>
+                <button onclick="sys.launchExam()" class="btn-action w-full py-4 bg-tactical-orange hover:bg-orange-600 text-white font-bold rounded-lg border-orange-800 uppercase tracking-widest shadow-lg">
+                    Initialize Exam
+                </button>
+            </div>
+
+            <!-- 3. TRAINING INTERFACE -->
+            <div id="screen-training" class="hidden h-full flex-col gap-6 fade-in max-w-5xl mx-auto w-full">
+                <div class="relative border p-8 rounded-xl shadow-lg min-h-[180px] flex flex-col justify-center items-center text-center dark:bg-slate-800 dark:border-slate-600 light:bg-white light:border-slate-200">
+                    <div class="absolute top-4 right-4 flex gap-3">
+                        <button onclick="sys.toggleFav()" id="btn-fav" class="transition-colors text-xl p-2 dark:text-slate-600 dark:hover:text-tactical-orange light:text-slate-400 light:hover:text-tactical-orange">
+                            <i class="fa-regular fa-heart"></i>
+                        </button>
+                    </div>
+                    <!-- Question Text Uniformity Applied -->
+                    <div id="train-q-text" class="text-xl md:text-2xl font-bold font-bangla leading-relaxed dark:text-slate-100 light:text-slate-900"></div>
+                    <div class="mt-4 text-[10px] font-mono font-bold px-2 py-1 rounded dark:bg-tactical-teal/10 dark:text-tactical-teal light:bg-teal-50 light:text-teal-700" id="train-q-id"></div>
+                </div>
+                <div id="train-feedback" class="hidden grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div id="fb-container" class="md:col-span-3 border-l-4 p-4 rounded-r-lg dark:bg-slate-800 dark:border-tactical-teal light:bg-white light:border-tactical-teal shadow-md transition-all feedback-panel">
+                         <h3 id="tf-title" class="text-sm font-bold uppercase tracking-wider mb-2"></h3>
+                         <div id="tf-body" class="text-sm font-bangla mb-2 dark:text-slate-200 light:text-slate-700"></div>
+                         <div id="tf-explain" class="pt-2 border-t border-dashed dark:border-slate-600 light:border-slate-300 text-base font-bangla italic dark:text-teal-400 light:text-tactical-teal font-medium"></div>
+                    </div>
+                    <div class="md:col-span-1 flex items-center justify-center">
+                        <button onclick="sys.nextTrainingQ()" class="btn-action w-full h-full py-4 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-lg border-slate-900 uppercase tracking-widest shadow-lg flex items-center justify-center gap-2" id="btn-next-train">
+                            Next <span class="text-xs opacity-50">(Enter)</span> <i class="fa-solid fa-chevron-right text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="flex flex-col gap-6" id="training-control-area">
+                    <div id="train-options" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+                    <div class="flex flex-col items-center justify-center pt-2">
+                        <div class="text-[10px] uppercase font-bold tracking-widest mb-3" id="conf-status-label">Default Confidence: 10</div>
+                        <div class="flex gap-4 w-full justify-center flex-wrap" id="linear-gauge"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. EXAM INTERFACE -->
+            <div id="screen-exam" class="hidden h-full w-full max-w-4xl mx-auto fade-in pb-24">
+                <div id="exam-paper" class="space-y-6"></div>
+                <div id="exam-controls" class="fixed bottom-0 left-0 w-full p-4 flex justify-center backdrop-blur-md z-40 shadow-2xl border-t-2 border-tactical-teal dark:bg-slate-900/95 light:bg-white/95">
+                    <button onclick="sys.submitExam()" id="btn-exam-submit" class="btn-action px-16 py-3 bg-tactical-teal hover:bg-teal-600 text-white font-bold rounded-full border-teal-900 uppercase tracking-widest shadow-lg transition-transform hover:scale-105">
+                        Submit Operations
+                    </button>
+                    <button onclick="sys.endSession()" id="btn-exam-return" class="hidden btn-action px-16 py-3 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-full border-slate-900 uppercase tracking-widest shadow-lg">
+                        Return to Debrief
+                    </button>
+                </div>
+            </div>
+
+            <!-- 5. DEBRIEF -->
+            <div id="screen-debrief" class="hidden flex flex-col items-center justify-center h-full fade-in w-full max-w-2xl mx-auto">
+                <div class="border p-10 rounded-2xl w-full shadow-2xl relative overflow-hidden dark:bg-slate-800 dark:border-slate-600 light:bg-white light:border-slate-200">
+                    <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-tactical-teal to-tactical-orange"></div>
+                    <div class="text-center border-b pb-6 mb-8 dark:border-slate-700 light:border-slate-200">
+                        <h2 class="text-4xl font-black mb-1 uppercase tracking-tighter dark:text-white light:text-slate-900">Mission Report</h2>
+                        <p class="text-xs font-mono uppercase dark:text-slate-500 light:text-slate-400" id="debrief-mode-label">TRAINING COMPLETE</p>
+                    </div>
+                    <div class="grid grid-cols-4 gap-4 mb-8 text-center">
+                        <div class="p-4 rounded border dark:bg-slate-900/50 dark:border-slate-700 light:bg-slate-50 light:border-slate-200">
+                            <div class="text-[10px] uppercase font-bold dark:text-slate-500 light:text-slate-500">Total</div>
+                            <div class="text-3xl font-black font-mono dark:text-white light:text-slate-800" id="deb-total">0</div>
+                        </div>
+                        <div class="p-4 rounded border dark:bg-slate-900/50 dark:border-slate-700 light:bg-slate-50 light:border-slate-200">
+                            <div class="text-[10px] uppercase font-bold dark:text-slate-500 light:text-slate-500">Score</div>
+                            <div class="text-3xl font-black font-mono text-tactical-teal" id="deb-score">0</div>
+                        </div>
+                        <div class="p-4 rounded border dark:bg-slate-900/50 dark:border-slate-700 light:bg-slate-50 light:border-slate-200">
+                            <div class="text-[10px] uppercase font-bold dark:text-slate-500 light:text-slate-500">Wrongs</div>
+                            <div class="text-3xl font-black font-mono text-red-500" id="deb-wrong">0</div>
+                        </div>
+                        <div class="p-4 rounded border dark:bg-slate-900/50 dark:border-slate-700 light:bg-slate-50 light:border-slate-200">
+                            <div class="text-[10px] uppercase font-bold dark:text-slate-500 light:text-slate-500">Skipped</div>
+                            <div class="text-3xl font-black font-mono text-tactical-orange" id="deb-skip">0</div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 gap-3">
+                         <button onclick="sys.reEngageHostiles()" id="btn-re-engage" class="hidden btn-action w-full py-4 bg-tactical-teal hover:bg-teal-600 text-white font-bold rounded-lg border-teal-900 uppercase tracking-wide shadow-lg flex items-center justify-center gap-3">
+                            <i class="fa-solid fa-crosshairs"></i> Re-Engage Hostiles (Training)
+                        </button>
+                         <button onclick="sys.reviewExamSheet()" id="btn-visual-review" class="hidden btn-action w-full py-4 bg-tactical-teal hover:bg-teal-600 text-white font-bold rounded-lg border-teal-900 uppercase tracking-wide shadow-lg flex items-center justify-center gap-3">
+                            <i class="fa-solid fa-magnifying-glass-chart"></i> Visual Forensic Review
+                        </button>
+                        <button onclick="sys.downloadReviewFile()" class="btn-action w-full py-4 bg-tactical-orange hover:bg-orange-600 text-white font-bold rounded-lg border-orange-800 uppercase tracking-wide shadow-lg flex items-center justify-center gap-3">
+                            <i class="fa-solid fa-file-export"></i> Export Hostile Targets
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const sys = {
+            db: [], 
+            folderFiles: [], 
+            session: {
+                mode: '', index: 0, score: 0, favorites: new Set(), reviewQueue: new Set(), 
+                examAnswers: {}, timer: null, filename: "Arsenal", confidence: 10, activeSet: [],
+                stats: { wrong: 0, skip: 0 } // New stats tracking
+            },
+
+            init: function() { this.renderLinearGauge(); this.setupKeyboardListeners(); },
+
+            setupKeyboardListeners: function() {
+                document.addEventListener('keydown', (e) => {
+                    if (this.session.mode === 'training' && !document.getElementById('screen-training').classList.contains('hidden')) {
+                        if (e.key >= '1' && e.key <= '4') {
+                            const btn = document.querySelector(`#train-options button:nth-child(${e.key})`);
+                            if (btn && !btn.disabled && !document.getElementById('train-options').classList.contains('hidden')) btn.click();
+                        }
+                        if (e.key >= '5' && e.key <= '9') this.setConfidence(parseInt(e.key));
+                        if (e.key === 'Enter' && !document.getElementById('train-feedback').classList.contains('hidden')) this.nextTrainingQ();
+                        if (e.key === 'ArrowRight') {
+                            if (document.getElementById('train-feedback').classList.contains('hidden')) this.skipTrainingQ();
+                            else this.nextTrainingQ();
+                        }
+                    }
+                });
+            },
+
+            toggleTheme: function() {
+                const html = document.documentElement;
+                if(html.classList.contains('dark')) { html.classList.remove('dark'); html.classList.add('light'); } 
+                else { html.classList.remove('light'); html.classList.add('dark'); }
+            },
+
+            abortMission: function() {
+                if(confirm("Abort current operation?")) { this.stopTimer(); this.resetScreens(); document.getElementById('screen-upload').classList.remove('hidden'); }
+            },
+
+            goBack: function() { this.stopTimer(); this.resetScreens(); document.getElementById('screen-mode').classList.remove('hidden'); },
+
+            resetScreens: function() {
+                const screens = ['screen-upload', 'screen-mode', 'screen-training', 'screen-exam-config', 'screen-exam', 'screen-debrief'];
+                screens.forEach(id => document.getElementById(id).classList.add('hidden'));
+                document.getElementById('timer-hud').classList.add('hidden');
+                document.getElementById('score-hud').classList.add('hidden');
+                document.getElementById('mode-display').innerText = "IDLE";
+                document.getElementById('btn-back').classList.add('hidden');
+                this.session.score = 0;
+                document.getElementById('score-display').innerText = "0";
+                this.session.stats = { wrong: 0, skip: 0 };
+            },
+
+            loadFile: function(input) { const file = input.files[0]; if(file) this.processFile(file); },
+
+            loadFolder: function(input) {
+                const files = Array.from(input.files).filter(f => f.name.endsWith('.txt'));
+                if(files.length === 0) { alert("No .txt files found."); return; }
+                this.folderFiles = files;
+                document.getElementById('file-list-container').classList.remove('hidden');
+                document.getElementById('file-count').innerText = `${files.length} FILES`;
+                const grid = document.getElementById('file-grid');
+                grid.innerHTML = '';
+                files.forEach(file => {
+                    const btn = document.createElement('button');
+                    btn.className = "arsenal-btn p-3 rounded text-left text-xs font-mono font-bold truncate";
+                    btn.innerText = file.name.replace('.txt', '');
+                    btn.onclick = () => this.processFile(file);
+                    grid.appendChild(btn);
+                });
+            },
+
+            processFile: function(file) {
+                this.session.filename = file.name.replace('.txt', '');
+                const reader = new FileReader();
+                reader.onload = (e) => this.parseData(e.target.result);
+                reader.readAsText(file, "UTF-8");
+            },
+
+            parseData: function(text) {
+                const lines = text.split('\n');
+                this.db = [];
+                lines.forEach(line => {
+                    if(!line.trim()) return;
+                    const p = line.split('|').map(s=>s.trim());
+                    if(p.length < 3) return;
+                    let item = { id: p[0], q: p[1], a: p[2], distractors: [], expl: "Intel Restricted", raw: line };
+                    if(p.length === 4) item.expl = p[3];
+                    else if (p.length > 4) { item.expl = p[p.length-1]; item.distractors = p.slice(3, p.length-1); }
+                    this.db.push(item);
+                });
+                if(this.db.length < 1) { alert("Arsenal Empty."); return; }
+                document.getElementById('screen-upload').classList.add('hidden');
+                document.getElementById('screen-mode').classList.remove('hidden');
+                document.getElementById('active-file').innerText = this.session.filename.toUpperCase();
+            },
+
+            startTraining: function(subsetIndices = null) {
+                this.session.mode = 'training';
+                this.session.index = 0;
+                this.session.score = 0;
+                this.session.stats = { wrong: 0, skip: 0 };
+                
+                if(subsetIndices) { this.session.activeSet = subsetIndices.map(i => this.db[i]); this.session.reviewQueue = new Set(); } 
+                else { this.session.activeSet = [...this.db]; this.session.reviewQueue = new Set(); }
+
+                document.getElementById('screen-mode').classList.add('hidden');
+                document.getElementById('screen-debrief').classList.add('hidden');
+                document.getElementById('screen-training').classList.remove('hidden');
+                document.getElementById('screen-training').classList.add('flex');
+                document.getElementById('mode-display').innerText = "TRAINING";
+                document.getElementById('score-hud').classList.remove('hidden');
+                document.getElementById('btn-back').classList.remove('hidden');
+                document.getElementById('score-display').innerText = "0";
+                
+                this.session.confidence = 10;
+                this.renderLinearGauge();
+                this.renderTrainingCard();
+            },
+
+            renderTrainingCard: function() {
+                if(this.session.index >= this.session.activeSet.length) { this.endSession(); return; }
+                const item = this.session.activeSet[this.session.index];
+                
+                document.getElementById('train-q-text').innerText = item.q;
+                document.getElementById('train-q-id').innerText = item.id;
+                document.getElementById('train-feedback').classList.add('hidden');
+                document.getElementById('train-options').classList.remove('hidden'); 
+                document.getElementById('training-control-area').classList.remove('hidden');
+                document.getElementById('train-options').innerHTML = ''; 
+                this.updateConfidenceLabel();
+                
+                const favBtn = document.getElementById('btn-fav');
+                const realIdx = this.db.indexOf(item);
+                const isFav = this.session.favorites.has(realIdx);
+                favBtn.innerHTML = isFav ? '<i class="fa-solid fa-heart"></i>' : '<i class="fa-regular fa-heart"></i>';
+                favBtn.className = isFav ? "text-tactical-orange text-xl p-2" : "text-slate-500 hover:text-tactical-orange text-xl p-2";
+
+                const choices = this.getOptions(item);
+                choices.forEach((ans, i) => {
+                    const btn = document.createElement('button');
+                    // Uniform text size applied
+                    btn.className = "btn-option w-full p-4 rounded-lg text-left font-bangla border transition-colors text-xl md:text-2xl dark:bg-slate-900 dark:border-slate-600 dark:text-slate-100 light:bg-white light:border-slate-300 light:text-slate-900";
+                    btn.innerText = ans;
+                    btn.setAttribute('data-key', i+1);
+                    btn.onclick = () => this.handleTrainAnswer(ans === item.a, ans, item);
+                    document.getElementById('train-options').appendChild(btn);
+                });
+            },
+
+            renderLinearGauge: function() {
+                const container = document.getElementById('linear-gauge');
+                if(!container) return;
+                container.innerHTML = '';
+                for(let i=5; i<=9; i++) {
+                    const btn = document.createElement('div');
+                    let activeClass = '';
+                    if(i === this.session.confidence) activeClass = i < 7 ? 'active-low' : 'active-high';
+                    btn.className = `conf-btn ${activeClass}`;
+                    btn.innerText = i;
+                    btn.setAttribute('data-val', i);
+                    btn.onclick = () => this.setConfidence(i);
+                    container.appendChild(btn);
+                }
+            },
+            
+            setConfidence: function(val) {
+                this.session.confidence = val;
+                this.renderLinearGauge();
+                this.updateConfidenceLabel();
+            },
+            
+            updateConfidenceLabel: function() {
+                const label = document.getElementById('conf-status-label');
+                if(this.session.confidence === 10) label.innerHTML = "Confidence: <span class='text-tactical-teal'>MAX (10)</span>";
+                else label.innerHTML = `Confidence: <span class='${this.session.confidence < 7 ? 'text-tactical-orange' : 'text-tactical-teal'}'>${this.session.confidence}</span>`;
+            },
+
+            handleTrainAnswer: function(isCorrect, ans, item) {
+                const conf = this.session.confidence;
+                const realIdx = this.db.indexOf(item);
+                const points = isCorrect ? conf : -conf;
+                this.session.score += points;
+                document.getElementById('score-display').innerText = this.session.score;
+
+                if(!isCorrect) {
+                    this.session.reviewQueue.add(realIdx);
+                    this.session.stats.wrong++;
+                }
+
+                document.getElementById('train-options').classList.add('hidden');
+                document.getElementById('training-control-area').classList.add('hidden');
+                
+                const fb = document.getElementById('train-feedback');
+                const fbContainer = document.getElementById('fb-container');
+                fb.classList.remove('hidden');
+                fbContainer.classList.remove('fb-correct', 'fb-wrong', 'fb-skip');
+                fbContainer.classList.add(isCorrect ? 'fb-correct' : 'fb-wrong');
+                
+                document.getElementById('tf-title').innerText = isCorrect ? "CONFIRMED" : "FAILURE";
+                document.getElementById('tf-title').className = isCorrect ? "font-bold text-lg uppercase tracking-wider mb-1 text-tactical-teal" : "font-bold text-lg uppercase tracking-wider mb-1 text-tactical-orange";
+                
+                let bodyHtml = isCorrect ? `<span class="text-emerald-500 font-bold">Target neutralized. (+${conf})</span>` : `Selected: <span class="text-red-500 line-through">${ans}</span> <br> Actual: <span class="text-emerald-500 font-bold">${item.a}</span> <span class="text-xs text-red-400 block mt-1">(-${conf} pts)</span>`;
+                document.getElementById('tf-body').innerHTML = bodyHtml;
+                document.getElementById('tf-explain').innerText = item.expl;
+                document.getElementById('tf-explain').classList.remove('hidden');
+            },
+
+            skipTrainingQ: function() {
+                const item = this.session.activeSet[this.session.index];
+                const realIdx = this.db.indexOf(item);
+                this.session.reviewQueue.add(realIdx);
+                this.session.stats.skip++;
+
+                document.getElementById('train-options').classList.add('hidden');
+                document.getElementById('training-control-area').classList.add('hidden');
+                const fb = document.getElementById('train-feedback');
+                const fbContainer = document.getElementById('fb-container');
+                fb.classList.remove('hidden');
+                fbContainer.classList.remove('fb-correct', 'fb-wrong', 'fb-skip');
+                fbContainer.classList.add('fb-skip'); 
+
+                document.getElementById('tf-title').innerText = "TARGET BYPASSED";
+                document.getElementById('tf-title').className = "font-bold text-lg uppercase tracking-wider mb-1 text-tactical-orange";
+                document.getElementById('tf-body').innerHTML = `Skipped. <br> Actual: <span class="text-emerald-500 font-bold">${item.a}</span> <span class="text-xs text-slate-400 block mt-1">(+0 pts)</span>`;
+                document.getElementById('tf-explain').innerText = item.expl;
+                document.getElementById('tf-explain').classList.remove('hidden');
+            },
+
+            nextTrainingQ: function() {
+                this.session.index++;
+                this.session.confidence = 10; 
+                this.renderLinearGauge();
+                this.renderTrainingCard();
+            },
+
+            showExamConfig: function() {
+                document.getElementById('screen-mode').classList.add('hidden');
+                document.getElementById('screen-exam-config').classList.remove('hidden');
+                const totalQ = this.db.length;
+                document.getElementById('exam-q-count').max = totalQ;
+                document.getElementById('exam-q-count').value = totalQ; 
+                document.getElementById('max-q-disp').innerText = "MAX: " + totalQ;
+                document.getElementById('btn-back').classList.remove('hidden');
+            },
+
+            launchExam: function() {
+                const qCount = parseInt(document.getElementById('exam-q-count').value);
+                const timePerQ = parseInt(document.getElementById('exam-time-slider').value);
+                this.session.mode = 'exam';
+                this.session.examSet = [...this.db].sort(() => 0.5 - Math.random()).slice(0, qCount);
+                this.session.examAnswers = {}; 
+                this.session.score = 0; 
+                this.session.reviewQueue = new Set();
+                this.session.stats = { wrong: 0, skip: 0 };
+                
+                document.getElementById('screen-exam-config').classList.add('hidden');
+                document.getElementById('screen-exam').classList.remove('hidden');
+                document.getElementById('mode-display').innerText = "EXAM SIMULATION";
+                document.getElementById('timer-hud').classList.remove('hidden');
+                document.getElementById('score-display').innerText = "0"; 
+                document.getElementById('btn-exam-submit').classList.remove('hidden');
+                document.getElementById('btn-exam-return').classList.add('hidden');
+                
+                this.renderExamSheet(false);
+                this.startTimer(qCount * timePerQ);
+            },
+
+            renderExamSheet: function(isReview) {
+                const container = document.getElementById('exam-paper');
+                container.innerHTML = '';
+                this.session.examSet.forEach((item, idx) => {
+                    const realIdx = this.db.indexOf(item);
+                    if(!item.examOptions) item.examOptions = this.getOptions(item);
+                    const choices = item.examOptions;
+                    const userSelected = this.session.examAnswers[idx];
+                    
+                    const el = document.createElement('div');
+                    el.className = "exam-q-block";
+                    if(isReview) {
+                        if(!userSelected) el.classList.add('exam-missed');
+                        else if(userSelected === item.a) el.classList.add('exam-correct');
+                        else el.classList.add('exam-wrong');
+                    } else {
+                        el.classList.add('border-slate-600', 'dark:bg-slate-800/50', 'light:bg-white');
+                    }
+
+                    let optionsHtml = choices.map(c => {
+                        let wrapperClass = "flex items-center gap-3 p-3 rounded border cursor-pointer transition-colors group ";
+                        let isDisabled = isReview ? "disabled" : "";
+                        let isChecked = (userSelected === c) ? "checked" : "";
+                        
+                        if(isReview) {
+                            wrapperClass += "cursor-default ";
+                            if(c === item.a) wrapperClass += "opt-correct "; 
+                            else if (c === userSelected) wrapperClass += "opt-wrong "; 
+                            else wrapperClass += "opacity-50 dark:border-slate-700 light:border-slate-200 "; 
+                        } else {
+                            wrapperClass += "dark:bg-slate-900/50 dark:border-slate-700 dark:hover:border-slate-500 light:bg-slate-50 light:border-slate-300 light:hover:border-slate-400 ";
+                        }
+
+                        // Uniform text size applied
+                        return `<label class="${wrapperClass}">
+                                <input type="radio" name="exam_q_${idx}" value="${c}" class="accent-tactical-teal w-4 h-4" ${isChecked} ${isDisabled} onchange="sys.session.examAnswers[${idx}] = '${c.replace(/'/g, "\\'")}'">
+                                <span class="text-xl md:text-2xl font-bangla transition-colors dark:text-slate-100 light:text-slate-900 ${isReview && c === item.a ? 'font-bold' : ''}">${c}</span>
+                            </label>`;
+                    }).join('');
+
+                    let explainHtml = isReview ? `<div class="mt-3 pt-2 border-t border-slate-600 text-xs text-tactical-teal font-mono italic">${item.expl}</div>` : '';
+
+                    el.innerHTML = `<div class="flex flex-col mb-4">
+                            <div class="flex justify-between items-start">
+                                <div class="text-xl md:text-2xl font-bold font-bangla dark:text-white light:text-slate-900"><span class="text-slate-500 mr-2 text-base">${idx+1}.</span>${item.q}</div>
+                                <button onclick="sys.toggleExamFav(${realIdx}, this)" class="transition-colors ${isReview ? '' : 'hidden'}"><i class="fa-regular fa-heart text-slate-500"></i></button>
+                            </div>
+                            <div class="text-[10px] font-mono mt-1 opacity-50 dark:text-slate-400 light:text-slate-500">ID: ${item.id}</div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">${optionsHtml}</div>
+                        ${explainHtml}`;
+                    container.appendChild(el);
+                });
+            },
+
+            reviewExamSheet: function() {
+                document.getElementById('screen-debrief').classList.add('hidden');
+                document.getElementById('screen-exam').classList.remove('hidden');
+                document.getElementById('btn-exam-submit').classList.add('hidden');
+                document.getElementById('btn-exam-return').classList.remove('hidden');
+                this.renderExamSheet(true); 
+            },
+
+            submitExam: function() {
+                this.stopTimer();
+                this.session.score = 0; 
+                this.session.stats = { wrong: 0, skip: 0 };
+                
+                this.session.examSet.forEach((item, idx) => {
+                    const userAns = this.session.examAnswers[idx];
+                    const realIdx = this.db.indexOf(item);
+                    if(userAns === item.a) {
+                        this.session.score += 1.0;
+                    } else if (userAns) {
+                        this.session.score -= 0.5;
+                        this.session.reviewQueue.add(realIdx);
+                        this.session.stats.wrong++;
+                    } else {
+                        this.session.reviewQueue.add(realIdx); // Skips also go to review file
+                        this.session.stats.skip++;
+                    }
+                });
+                this.endSession();
+            },
+
+            getOptions: function(item) {
+                let opts = [item.a];
+                if(item.distractors && item.distractors.length > 0) opts = opts.concat(item.distractors);
+                else {
+                    const pool = this.db.filter(x => x.id !== item.id);
+                    for(let i=0; i<3; i++) {
+                        if(pool.length > 0) {
+                            const r = Math.floor(Math.random()*pool.length);
+                            opts.push(pool[r].a);
+                            pool.splice(r,1);
+                        }
+                    }
+                }
+                return opts.sort(() => Math.random() - 0.5);
+            },
+
+            toggleFav: function() {
+                const idx = this.db.indexOf(this.session.activeSet[this.session.index]);
+                if(this.session.favorites.has(idx)) this.session.favorites.delete(idx);
+                else this.session.favorites.add(idx);
+                this.renderTrainingCard();
+            },
+
+            toggleExamFav: function(realIdx, btn) {
+                 if(this.session.favorites.has(realIdx)) {
+                    this.session.favorites.delete(realIdx);
+                    btn.innerHTML = '<i class="fa-regular fa-heart"></i>';
+                } else {
+                    this.session.favorites.add(realIdx);
+                    btn.innerHTML = '<i class="fa-solid fa-heart text-tactical-orange"></i>';
+                }
+            },
+            
+            toggleExplain: function() { document.getElementById('tf-explain').classList.toggle('hidden'); },
+
+            startTimer: function(seconds) {
+                const display = document.getElementById('timer-display');
+                let remain = seconds;
+                this.session.timer = setInterval(() => {
+                    remain--;
+                    const m = Math.floor(remain / 60).toString().padStart(2, '0');
+                    const s = (remain % 60).toString().padStart(2, '0');
+                    display.innerText = `${m}:${s}`;
+                    if(remain <= 0) this.submitExam();
+                }, 1000);
+            },
+
+            stopTimer: function() { if(this.session.timer) clearInterval(this.session.timer); },
+
+            endSession: function() {
+                if(this.session.mode === 'training') {
+                    document.getElementById('btn-visual-review').classList.add('hidden');
+                    if(this.session.reviewQueue.size > 0) document.getElementById('btn-re-engage').classList.remove('hidden');
+                    else document.getElementById('btn-re-engage').classList.add('hidden');
+                } else {
+                    document.getElementById('btn-visual-review').classList.remove('hidden');
+                    document.getElementById('btn-re-engage').classList.add('hidden');
+                }
+
+                document.getElementById('screen-training').classList.add('hidden');
+                document.getElementById('screen-exam').classList.add('hidden');
+                document.getElementById('screen-debrief').classList.remove('hidden');
+                document.getElementById('screen-debrief').classList.add('flex');
+                document.getElementById('timer-hud').classList.add('hidden');
+
+                const total = this.session.mode === 'exam' ? this.session.examSet.length : this.session.activeSet.length;
+                document.getElementById('deb-total').innerText = total;
+                document.getElementById('deb-score').innerText = this.session.score;
+                // Separate stats for debrief
+                if(this.session.mode === 'exam'){
+                    document.getElementById('deb-wrong').innerText = this.session.stats.wrong;
+                    document.getElementById('deb-skip').innerText = this.session.stats.skip;
+                } else {
+                    document.getElementById('deb-wrong').innerText = this.session.stats.wrong;
+                    document.getElementById('deb-skip').innerText = this.session.stats.skip;
+                }
+            },
+
+            reEngageHostiles: function() {
+                const indices = Array.from(this.session.reviewQueue);
+                this.startTraining(indices);
+            },
+
+            downloadReviewFile: function() {
+                if(this.session.reviewQueue.size === 0) { alert("No hostile targets identified."); return; }
+                let content = "";
+                Array.from(this.session.reviewQueue).sort((a,b)=>a-b).forEach(idx => { content += this.db[idx].raw + "\n"; });
+                
+                const currentName = this.session.filename;
+                let nextName = "";
+                const versionMatch = currentName.match(/_(\d+)$/);
+                if (versionMatch) {
+                    const n = parseInt(versionMatch[1]) + 1;
+                    nextName = currentName.substring(0, versionMatch.index) + "_" + n;
+                } else { nextName = currentName + "_1"; }
+
+                const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${nextName}.txt`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            }
+        };
+        sys.init();
+    </script>
+</body>
+</html>
