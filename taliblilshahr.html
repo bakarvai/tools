@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Arabic Marks Evaluation</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        body { font-family: "Times New Roman", Times, serif; background-color: #f4f4f4; display: flex; flex-direction: column; align-items: center; padding: 10px; margin: 0; }
+        #capture-area { background-color: white; padding: 20px; width: 100%; max-width: 800px; box-sizing: border-box; box-shadow: 0 0 5px rgba(0, 0, 0, 0.1); border: 1px solid #ccc; position: relative; }
+        h2 { text-align: center; margin: 5px 0 15px 0; text-transform: uppercase; font-size: 1.2rem; }
+        .header-controls { text-align: center; margin-bottom: 15px; }
+        select { font-family: "Times New Roman", Times, serif; font-size: 16px; padding: 4px; border: 1px solid #aaa; font-weight: bold; }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        th, td { border: 1px solid #000; padding: 6px 4px; text-align: left; vertical-align: middle; }
+        th { background-color: #f0f0f0; text-align: center; font-size: 13px; }
+        .marks-col { width: 15%; text-align: center; }
+        .name-col { width: 35%; }
+        
+        /* Input Base Styling */
+        input.mark-input { width: 100%; border: none; outline: none; font-family: "Times New Roman", Times, serif; font-size: 16px; text-align: center; background: #eef7f0; height: 25px; font-weight: bold; color: #333; transition: background 0.2s; }
+        input.mark-input:focus { background: #d4edda; }
+        input.mark-input:disabled { background: #f0f0f0; color: #999; }
+        
+        /* Error Class for Red Highlight */
+        input.mark-input.error { background: #ffcccc; color: #c0392b; }
+
+        .controls { margin-top: 20px; width: 100%; max-width: 800px; text-align: center; display: flex; flex-direction: column; gap: 10px; }
+        button { font-family: "Times New Roman", Times, serif; font-size: 16px; padding: 12px 20px; cursor: pointer; background-color: #2c3e50; color: white; border: none; border-radius: 5px; font-weight: bold; width: 100%; }
+        button.secondary { background-color: #7f8c8d; }
+        button:hover { background-color: #1a252f; }
+        button.secondary:hover { background-color: #636e72; }
+        button:disabled { background-color: #bdc3c7; cursor: not-allowed; }
+        .mobile-tip { font-size: 12px; color: #666; text-align: center; margin-bottom: 10px; font-family: sans-serif; }
+    </style>
+</head>
+<body>
+
+    <div id="capture-area">
+        <h2>Arabic Performance Evaluation</h2>
+        
+        <div class="header-controls">
+            <label for="ustaz-select"><strong>Ustaz:</strong></label>
+            <select id="ustaz-select">
+                <option value="none" selected disabled>-- Select Your Name --</option>
+                <option value="Shakil">Shakil</option>
+                <option value="Harun">Harun</option>
+                <option value="AbuBakr">AbuBakr</option>
+                <option value="Amran">Amran</option>
+                <option value="ZiadNoor">ZiadNoor</option>
+                <option value="ShahAlam">ShahAlam</option>
+                <option value="Saiful">Saiful</option>
+                <option value="Shojib">Shojib</option>
+            </select>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th class="name-col">Student Name</th>
+                    <th class="marks-col">Marks</th>
+                    <th class="name-col">Student Name</th>
+                    <th class="marks-col">Marks</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>1. Ibrahim (Cl. 2)</td><td><input type="text" inputmode="numeric" class="mark-input" data-order="1" disabled></td>
+                    <td>18. Mahadi (Cl. 4)</td><td><input type="text" inputmode="numeric" class="mark-input" data-order="18" disabled></td>
+                </tr>
+                <tr>
+                    <td>2. Abdullah bin Shams (Cl. 3)</td><td><input type="text" inputmode="numeric" class="mark-input" data-order="2" disabled></td>
+                    <td>19. Bodiujjaman (Cl. 5)</td><td><input type="text" inputmode="numeric" class="mark-input" data-order="19" disabled></td>
+                </tr>
+                <tr>
+                    <td>3. Farhan (Cl. 4)</td><td><input type="text" inputmode="numeric" class="mark-input" data-order="3" disabled></td>
+                    <td>20. Rishan (Cl. 5)</td><td><input type="text" inputmode="numeric" class="mark-input" data-order="20" disabled></td>
+                </tr>
+                <tr>
+                    <td>4. Meraj (Cl. 4)</td><td><input type="text" inputmode="numeric" class="mark-input" data-order="4" disabled></td>
+                    <td>21. Tamim (Cl. 5)</td><td><input type="text" inputmode="numeric" class="mark-input" data-order="21" disabled></td>
+                </tr>
+                <tr>
+                    <td>5. Muaz (Cl. 4)</td><td><input type="text" inputmode="numeric" class="mark-input" data-order="5" disabled></td>
+                    <td>22. Tasnim (Cl. 5)</td><td><input type="text" inputmode="numeric" class="mark-input" data-order="22" disabled></td>
+                </tr>
+                <tr>
+                    <td>6. Mustakim (Cl. 4)</td><td><input type="text" inputmode="numeric" class="mark-input" data-order="6" disabled></td>
+                    <td>23. Nahid (Cl. 5)</td><td><input type="text" inputmode="numeric" class="mark-input" data-order="23" disabled></td>
+                </tr>
+                <tr>
+                    <td>7. Mushfiq (Cl. 4)</td><td><input type="text" inputmode="numeric" class="mark-input" data-order="7" disabled></td>
+                    <td>24. Afnan (Cl. 5)</td><td><input type="text" inputmode="numeric" class="mark-input" data-order="24" disabled></td>
+                </tr>
+                <tr>
+                    <td>8. Musab (Cl. 4)</td><td><input type="text" inputmode="numeric" class="mark-input" data-order="8" disabled></td>
+                    <td>25. Boro Abdullah (Cl. 5)</td><td><input type="text" inputmode="numeric" class="mark-input" data-order="25" disabled></td>
+                </tr>
+                <tr>
+                    <td>9. Ahnaf (Cl. 4)</td><td><input type="text" inputmode="numeric" class="mark-input" data-order="9" disabled></td>
+                    <td>26. Choto Abdullah (Cl. 5)</td><td><input type="text" inputmode="numeric" class="mark-input" data-order="26" disabled></td>
+                </tr>
+                <tr>
+                    <td>10. Abdur Rahim (Cl. 4)</td><td><input type="text" inputmode="numeric" class="mark-input" data-order="10" disabled></td>
+                    <td>27. Sahayel (Cl. 5)</td><td><input type="text" inputmode="numeric" class="mark-input" data-order="27" disabled></td>
+                </tr>
+                <tr>
+                    <td>11. Hasib (Cl. 4)</td><td><input type="text" inputmode="numeric" class="mark-input" data-order="11" disabled></td>
+                    <td>28. Mridha (Cl. 5)</td><td><input type="text" inputmode="numeric" class="mark-input" data-order="28" disabled></td>
+                </tr>
+                <tr>
+                    <td>12. Jisan (Cl. 4)</td><td><input type="text" inputmode="numeric" class="mark-input" data-order="12" disabled></td>
+                    <td>29. Sindid (Cl. 5)</td><td><input type="text" inputmode="numeric" class="mark-input" data-order="29" disabled></td>
+                </tr>
+                <tr>
+                    <td>13. Ishrak (Cl. 4)</td><td><input type="text" inputmode="numeric" class="mark-input" data-order="13" disabled></td>
+                    <td>30. Ramin (Cl. 5)</td><td><input type="text" inputmode="numeric" class="mark-input" data-order="30" disabled></td>
+                </tr>
+                <tr>
+                    <td>14. Yafi (Cl. 4)</td><td><input type="text" inputmode="numeric" class="mark-input" data-order="14" disabled></td>
+                    <td>31. Shahdad (Cl. 5)</td><td><input type="text" inputmode="numeric" class="mark-input" data-order="31" disabled></td>
+                </tr>
+                <tr>
+                    <td>15. Saad (Cl. 4)</td><td><input type="text" inputmode="numeric" class="mark-input" data-order="15" disabled></td>
+                    <td>32. Arif (Cl. 5)</td><td><input type="text" inputmode="numeric" class="mark-input" data-order="32" disabled></td>
+                </tr>
+                <tr>
+                    <td>16. Khattabi (Cl. 4)</td><td><input type="text" inputmode="numeric" class="mark-input" data-order="16" disabled></td>
+                    <td>33. Ahmad (Cl. 6)</td><td><input type="text" inputmode="numeric" class="mark-input" data-order="33" disabled></td>
+                </tr>
+                <tr>
+                    <td>17. Rahi (Cl. 4)</td><td><input type="text" inputmode="numeric" class="mark-input" data-order="17" disabled></td>
+                    <td>34. Mahib (Cl. 6)</td><td><input type="text" inputmode="numeric" class="mark-input" data-order="34" disabled></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="controls">
+        <button id="save-btn" onclick="submitToGoogleSheets()">📤 Save to Database & Download JPG</button>
+    </div>
+
+    <script>
+        let currentDefaultMark = '';
+        let maxAllowedMark = 0;
+        const selectElement = document.getElementById('ustaz-select');
+        const inputs = document.querySelectorAll('.mark-input');
+
+        // Clean Device Fingerprint Generation
+        let deviceId = localStorage.getItem('arabic_marks_device_id');
+        if (!deviceId) {
+            deviceId = Math.floor(Math.random() * 16777215).toString(16).toUpperCase().padStart(4, '0');
+            localStorage.setItem('arabic_marks_device_id', deviceId);
+        }
+        let os = "Unknown";
+        let ua = navigator.userAgent;
+        if (ua.indexOf("Android") !== -1) os = "Android";
+        else if (ua.indexOf("iPhone") !== -1 || ua.indexOf("iPad") !== -1) os = "iOS";
+        else if (ua.indexOf("Win") !== -1) os = "Windows";
+        else if (ua.indexOf("Mac") !== -1) os = "Mac";
+        const cleanDeviceInfo = os + " [ID: " + deviceId + "]";
+
+        // 1. Authentication & Mark Limit Setup
+        selectElement.addEventListener('change', function() {
+            const selectedUstaz = this.value;
+
+            if (selectedUstaz === 'Saiful' || selectedUstaz === 'Shojib') {
+                currentDefaultMark = '5';
+                maxAllowedMark = 5;
+            } else {
+                currentDefaultMark = '15';
+                maxAllowedMark = 15;
+            }
+
+            inputs.forEach(input => {
+                input.disabled = false;
+                input.value = currentDefaultMark;
+                input.classList.remove('error'); // Clear red markers on change
+            });
+        });
+
+        // 2. Focus/Blur Logic (Vanish/Return default marks)
+        inputs.forEach(input => {
+            input.addEventListener('focus', function() {
+                if (this.value === currentDefaultMark) this.value = ''; 
+                this.classList.remove('error'); // Clear red highlight when they click to fix it
+            });
+            input.addEventListener('blur', function() {
+                if (this.value.trim() === '') this.value = currentDefaultMark; 
+            });
+        });
+
+        // 3. Enter Key Navigation Logic
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter' || event.keyCode === 13) {
+                if (event.target.classList.contains('mark-input')) {
+                    event.preventDefault(); 
+                    let currentOrder = parseInt(event.target.getAttribute('data-order'));
+                    let nextInput = document.querySelector(`input[data-order="${currentOrder + 1}"]`);
+                    
+                    if (nextInput && !nextInput.disabled) {
+                        nextInput.focus();
+                    } else {
+                        event.target.blur(); 
+                    }
+                }
+            }
+        });
+
+        // 4. Google Sheets API Submission Logic + LIMIT VALIDATION
+        function submitToGoogleSheets() {
+            const ustazName = document.getElementById('ustaz-select').value;
+            if (ustazName === 'none') {
+                alert("Please select your name from the dropdown before saving.");
+                return;
+            }
+
+            // *** NEW: Mark Limit Validation Check ***
+            let hasError = false;
+            let errorMessage = "";
+
+            inputs.forEach(input => {
+                if (!input.disabled) {
+                    input.classList.remove('error'); // Reset styling
+                    
+                    // Convert input to number to check value safely
+                    let markValue = parseInt(input.value); 
+                    
+                    if (isNaN(markValue) || markValue > maxAllowedMark) {
+                        hasError = true;
+                        input.classList.add('error'); // Turn input RED
+                        let studentNameText = input.parentElement.previousElementSibling.innerText;
+                        
+                        // Add to error popup message
+                        errorMessage += `\n• ${studentNameText} (Entered: ${input.value}, Limit: ${maxAllowedMark})`;
+                    }
+                }
+            });
+
+            // If any marks are too high, block submission and warn user
+            if (hasError) {
+                alert(`⚠️ SUBMISSION FAILED!\n\nThe limit for ${ustazName} is ${maxAllowedMark} marks.\nPlease fix the red fields:` + errorMessage);
+                return; // Stop the function completely
+            }
+
+            // Data extraction for valid submission
+            let marksData = [];
+            inputs.forEach(input => {
+                if (!input.disabled) {
+                    let studentNameText = input.parentElement.previousElementSibling.innerText;
+                    marksData.push({
+                        id: input.getAttribute('data-order'), 
+                        name: studentNameText,
+                        mark: input.value
+                    });
+                }
+            });
+
+            // This forces the array to sort sequentially by Student ID (1 to 34)
+            marksData.sort((a, b) => parseInt(a.id) - parseInt(b.id));
+
+            const payload = {
+                ustaz: ustazName,
+                deviceInfo: cleanDeviceInfo, 
+                marksList: marksData
+            };
+
+            const webAppUrl = 'https://script.google.com/macros/s/AKfycbyvNlBW3LKinxAV65sES7JeByQfk1rbLjn2aelg8AMjliUR2ZDldNN7FoN3goRQkif5/exec'; 
+
+            if(webAppUrl === 'YOUR_WEB_APP_URL_HERE') {
+                alert("WARNING: You have not added your Google Script URL to the code.");
+                downloadJPG();
+                return;
+            }
+
+            const btn = document.getElementById('save-btn');
+            const originalText = btn.innerText;
+            btn.innerText = "⏳ Saving to Database...";
+            btn.disabled = true;
+
+            fetch(webAppUrl, {
+                method: 'POST',
+                mode: 'no-cors', 
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify(payload)
+            })
+            .then(response => {
+                alert("Success! Marks saved to Google Sheets.");
+                btn.innerText = originalText;
+                btn.disabled = false;
+                downloadJPG(); 
+            })
+            .catch(error => {
+                console.error('Error!', error.message);
+                alert("Error saving data to Sheets. Saving offline JPG backup instead.");
+                btn.innerText = originalText;
+                btn.disabled = false;
+                downloadJPG();
+            });
+        }
+
+        // 5. JPG Download Logic
+        function downloadJPG() {
+            const ustazName = document.getElementById('ustaz-select').value;
+            if (ustazName === 'none') {
+                alert("Please select your name before saving.");
+                return;
+            }
+
+            const element = document.getElementById('capture-area');
+            const cleanName = ustazName.replace(/\s+/g, '_');
+            const fileName = 'Marks_Sheet_' + cleanName + '.jpg';
+
+            inputs.forEach(input => {
+                input.setAttribute('value', input.value);
+                input.style.background = 'transparent';
+                input.classList.remove('error'); // Clear any red error formatting for the clean photo
+            });
+
+            html2canvas(element, { 
+                scale: 2, 
+                backgroundColor: "#ffffff"
+            }).then(canvas => {
+                let link = document.createElement('a');
+                link.download = fileName;
+                link.href = canvas.toDataURL('image/jpeg', 1.0);
+                link.click();
+                
+                inputs.forEach(input => {
+                    if(!input.disabled) input.style.background = '#eef7f0';
+                });
+            });
+        }
+    </script>
+</body>
+</html>
