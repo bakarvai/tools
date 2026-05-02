@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Arabic Marks Evaluation</title>
+    <title>Student Performance Evaluation</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         body { font-family: "Times New Roman", Times, serif; background-color: #f4f4f4; display: flex; flex-direction: column; align-items: center; padding: 10px; margin: 0; }
@@ -27,11 +27,8 @@
 
         .controls { margin-top: 20px; width: 100%; max-width: 800px; text-align: center; display: flex; flex-direction: column; gap: 10px; }
         button { font-family: "Times New Roman", Times, serif; font-size: 16px; padding: 12px 20px; cursor: pointer; background-color: #2c3e50; color: white; border: none; border-radius: 5px; font-weight: bold; width: 100%; }
-        button.secondary { background-color: #7f8c8d; }
         button:hover { background-color: #1a252f; }
-        button.secondary:hover { background-color: #636e72; }
         button:disabled { background-color: #bdc3c7; cursor: not-allowed; }
-        .mobile-tip { font-size: 12px; color: #666; text-align: center; margin-bottom: 10px; font-family: sans-serif; }
     </style>
 </head>
 <body>
@@ -146,19 +143,8 @@
         const selectElement = document.getElementById('ustaz-select');
         const inputs = document.querySelectorAll('.mark-input');
 
-        // Clean Device Fingerprint Generation
-        let deviceId = localStorage.getItem('arabic_marks_device_id');
-        if (!deviceId) {
-            deviceId = Math.floor(Math.random() * 16777215).toString(16).toUpperCase().padStart(4, '0');
-            localStorage.setItem('arabic_marks_device_id', deviceId);
-        }
-        let os = "Unknown";
-        let ua = navigator.userAgent;
-        if (ua.indexOf("Android") !== -1) os = "Android";
-        else if (ua.indexOf("iPhone") !== -1 || ua.indexOf("iPad") !== -1) os = "iOS";
-        else if (ua.indexOf("Win") !== -1) os = "Windows";
-        else if (ua.indexOf("Mac") !== -1) os = "Mac";
-        const cleanDeviceInfo = os + " [ID: " + deviceId + "]";
+        // Restore raw device info
+        const cleanDeviceInfo = navigator.userAgent;
 
         // 1. Authentication & Mark Limit Setup
         selectElement.addEventListener('change', function() {
@@ -207,7 +193,7 @@
             }
         });
 
-        // 4. Google Sheets API Submission Logic + LIMIT VALIDATION
+        // 4. Database Submission Logic + LIMIT VALIDATION
         function submitToGoogleSheets() {
             const ustazName = document.getElementById('ustaz-select').value;
             if (ustazName === 'none') {
@@ -215,7 +201,7 @@
                 return;
             }
 
-            // *** NEW: Mark Limit Validation Check ***
+            // *** Mark Limit Validation Check ***
             let hasError = false;
             let errorMessage = "";
 
@@ -267,12 +253,6 @@
 
             const webAppUrl = 'https://script.google.com/macros/s/AKfycbyvNlBW3LKinxAV65sES7JeByQfk1rbLjn2aelg8AMjliUR2ZDldNN7FoN3goRQkif5/exec'; 
 
-            if(webAppUrl === 'YOUR_WEB_APP_URL_HERE') {
-                alert("WARNING: You have not added your Google Script URL to the code.");
-                downloadJPG();
-                return;
-            }
-
             const btn = document.getElementById('save-btn');
             const originalText = btn.innerText;
             btn.innerText = "⏳ Saving to Database...";
@@ -285,14 +265,14 @@
                 body: JSON.stringify(payload)
             })
             .then(response => {
-                alert("Success! Marks saved to Database.");
+                alert("Success! Marks saved to database.");
                 btn.innerText = originalText;
                 btn.disabled = false;
                 downloadJPG(); 
             })
             .catch(error => {
                 console.error('Error!', error.message);
-                alert("Error saving data to Sheets. Saving offline JPG backup instead.");
+                alert("Error saving data to database. Saving offline JPG backup instead.");
                 btn.innerText = originalText;
                 btn.disabled = false;
                 downloadJPG();
